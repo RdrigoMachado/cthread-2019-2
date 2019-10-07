@@ -21,14 +21,32 @@ int novoTID(){
 	return tid;
 }
 
-int inicializar(){
-		iniciada = TRUE;
-		tid = -1;
-		return TRUE;
+void inicializar(){
+		if(iniciada == FALSE){
+			iniciada = TRUE;
+			tid = -1;
+		}
 }
 
 //==================Adicionar TCB's nas Listas/Filas============================
-TCB_t* criarTCB(){
+TCB_t* retirarThreadDeMaiorPrioridade(){
+	if(listaDePrioridades == NULL)
+		return NULL;
+	FirstFila2(listaDePrioridades);
+	if(listaDePrioridades->first == NULL)
+		return NULL;
+
+	NoPrioridade* noAtual = GetAtIteratorFila2(listaDePrioridades);
+	FirstFila2(noAtual->filaFCFS);
+	TCB_t* tcbMaiorPrioridade = GetAtIteratorFila2(noAtual->filaFCFS);
+	DeleteAtIteratorFila2(noAtual->filaFCFS);
+	if((noAtual->filaFCFS)->first == NULL)
+		DeleteAtIteratorFila2(listaDePrioridades);
+
+	return tcbMaiorPrioridade;
+}
+
+TCB_t* criarTCB(int prioridade){
 	TCB_t* tcb = malloc(sizeof(TCB_t));
 	ucontext_t* contextoAtual = malloc(sizeof(ucontext_t));
 	getcontext(contextoAtual);
@@ -38,7 +56,7 @@ TCB_t* criarTCB(){
 	tcb->tid = novoTID();
 	tcb->context = *contextoAtual;
 	tcb->state = PROCST_APTO;
-	tcb->prio = 0;
+	tcb->prio = prioridade;
 	return tcb;
 }
 
@@ -113,51 +131,59 @@ void listarPilha(PFILA2 lista){
 	while(lista->it !=NULL){
 		PNODE2 no = (lista->it);
 		TCB_t* tcb = no->node;
-		printf("TID: %d, ",tcb->tid);
+		printf("TID: %d",tcb->tid);
 		if((NextFila2(lista)) != 0)
 			return;
+		printf(", ");
 	}
 }
 void listarFila(){
 	FirstFila2(listaDePrioridades);
 	while(listaDePrioridades->it !=NULL){
 		NoPrioridade* no = listaDePrioridades->it->node;
-		printf("\nPrioridade %d:\n", no->prioridade);
+		printf("Prioridade %d:\n", no->prioridade);
 		listarPilha(no->filaFCFS);
+		printf("\n");
 		if((NextFila2(listaDePrioridades)) != 0)
 			return;
 	}
 }
 
 void teste(){
-	TCB_t* novoTCB1 = criarTCB();
-	TCB_t* novoTCB2 = criarTCB();
-	TCB_t* novoTCB3 = criarTCB();
-	novoTCB3->prio = 4;
-	TCB_t* novoTCB4 = criarTCB();
-	novoTCB4->prio = 2;
-	TCB_t* novoTCB5 = criarTCB();
-	novoTCB5->prio = 4;
+	//cria tcb's
+	TCB_t* novoTCB1 = criarTCB(4);
+	TCB_t* novoTCB2 = criarTCB(0);
+	TCB_t* novoTCB3 = criarTCB(1);
+	TCB_t* novoTCB4 = criarTCB(5);
+	TCB_t* novoTCB5 = criarTCB(2);
 
+	//adiciona tcb's na lista de prioridades
 	inicializarListaDePrioridades();
 	adicionarTCBNaListaDePrioridades(novoTCB1);
 	adicionarTCBNaListaDePrioridades(novoTCB2);
 	adicionarTCBNaListaDePrioridades(novoTCB3);
 	adicionarTCBNaListaDePrioridades(novoTCB4);
 	adicionarTCBNaListaDePrioridades(novoTCB5);
-	printf("LISTAR:\n\n");
+
+	//imprime lista de tcb's
+	printf("LISTAR:\n");
 	listarFila();
+	printf("\n");
+	//remove todos os tcb's em ordem de prioridade
+	TCB_t* tcbMaiorPrioridade = retirarThreadDeMaiorPrioridade();
+	do{
+		printf("Removendo TCB de maior prioridade:\n");
+		printf("TID do TCB: %d\n",tcbMaiorPrioridade->tid);
+		tcbMaiorPrioridade = retirarThreadDeMaiorPrioridade();
+	}while(tcbMaiorPrioridade != NULL);
+
 
 }
 //==============================================================================
 
 int ccreate (void* (*start)(void*), void *arg, int prio) {
-	if(iniciada == FALSE){
-		if (inicializar() == TRUE)
-			printf("Sucesso\n");
-		else
-			printf("Erro\n");
-	}
+	inicializar();
+	teste();
 	teste();
 
 
