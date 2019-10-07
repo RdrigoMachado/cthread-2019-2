@@ -9,12 +9,14 @@
 #include <signal.h>
 #define TRUE 1
 #define FALSE 0
+#define ERRO -1
 
 
 int iniciada = FALSE;
-TCB_t* main_tcb;
-PFILA2 listaDePrioridades = NULL;
 int tid;
+TCB_t* main_tcb;
+PFILA2 listaDePrioridades;
+TCB_t* executando;
 
 int novoTID(){
 	tid++;
@@ -25,8 +27,12 @@ void inicializar(){
 		if(iniciada == FALSE){
 			iniciada = TRUE;
 			tid = -1;
+			listaDePrioridades = NULL;
+			executando = NULL;
+			startTimer();
 		}
 }
+
 
 //==================Adicionar TCB's nas Listas/Filas============================
 TCB_t* retirarThreadDeMaiorPrioridade(){
@@ -46,17 +52,55 @@ TCB_t* retirarThreadDeMaiorPrioridade(){
 	return tcbMaiorPrioridade;
 }
 
-TCB_t* criarTCB(int prioridade){
+void despachante(){
+		executando = retirarThreadDeMaiorPrioridade();
+		executando->state = PROCST_EXEC;
+		setcontext(&(executando->context));
+}
+
+void escalonador(){
+	if(executando == NULL){
+		despachante();
+	}
+
+	//salva contexto de executando
+	//faz swapcontext com o contexto do tcb de maior prioridade
+	//adiciona tcb de executando na lista
+	//executando = tcb de maior prioridade
+	executando = retirarThreadDeMaiorPrioridade();
+}
+
+void finalizaThreadEChamaEscalonador(){
+		free(executando);
+		TCB_t* threadAtual = executando;
+		threadAtual->state = PROCST_TERMINO;
+		//join
+		executando = NULL;
+		despachante();
+}
+
+ucontext_t* adicionarLinkFinalizacaoThread(){
+	ucontext_t* contextoDeFinalizacao = malloc(sizeof(ucontext_t));
+	getcontext(contextoDeFinalizacao);
+	contextoDeFinalizacao->uc_stack.ss_sp = malloc(STACK_SIZE);
+	contextoDeFinalizacao->uc_stack.ss_size = STACK_SIZE;
+	contextoDeFinalizacao->uc_stack.ss_flags = 0;
+	makecontext(contextoDeFinalizacao, (void*)start, 1 , arg);
+}
+TCB_t* criarTCB(int prioridade, void* (*start)(void*), void* arg){
 	TCB_t* tcb = malloc(sizeof(TCB_t));
+	tcb->tid = novoTID();
+	tcb->context = *contextoAtual;
+	tcb->state = PROCST_APTO;
+	tcb->prio = prioridade;
+
 	ucontext_t* contextoAtual = malloc(sizeof(ucontext_t));
 	getcontext(contextoAtual);
 	contextoAtual->uc_stack.ss_sp = malloc(STACK_SIZE);
 	contextoAtual->uc_stack.ss_size = STACK_SIZE;
 	contextoAtual->uc_stack.ss_flags = 0;
-	tcb->tid = novoTID();
-	tcb->context = *contextoAtual;
-	tcb->state = PROCST_APTO;
-	tcb->prio = prioridade;
+	makecontext(contextoAtual, (void*)start, 1 , arg);
+	contextoAtual->uc_link = adicionarLinkFinalizacaoThread();
 	return tcb;
 }
 
@@ -183,34 +227,41 @@ void teste(){
 
 int ccreate (void* (*start)(void*), void *arg, int prio) {
 	inicializar();
-	teste();
-	teste();
-
-
-	return -1;
+	TCB_t* novoTCB =  criarTCB(0, void* (*start), arg);
+	if(adicionarTCBNaListaDePrioridades(novoTCB) == TRUE)
+		return tid;
+	else
+		return ERRO;
 }
 
+
 int cyield(void) {
+	inicializar();
 	return -1;
 }
 
 int cjoin(int tid) {
+	inicializar();
 	return -1;
 }
 
 int csem_init(csem_t *sem, int count) {
+	inicializar();
 	return -1;
 }
 
 int cwait(csem_t *sem) {
+	inicializar();
 	return -1;
 }
 
 int csignal(csem_t *sem) {
+	inicializar();
 	return -1;
 }
 
 int cidentify (char *name, int size) {
+	inicializar();
 	strncpy (name, "Sergio Cechin - 2019/2 - Teste de compilacao.", size);
 	return 0;
 }
