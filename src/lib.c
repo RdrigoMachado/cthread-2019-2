@@ -9,6 +9,7 @@
 #include <signal.h>
 #define TRUE 1
 #define FALSE 0
+#define SUCESSO 0
 #define ERRO -1
 
 
@@ -56,6 +57,7 @@ void despachante(){
 		executando = retirarThreadDeMaiorPrioridade();
 		executando->state = PROCST_EXEC;
 		setcontext(&(executando->context));
+		startTimer();
 }
 
 void escalonador(){
@@ -237,12 +239,22 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 
 int cyield(void) {
 	inicializar();
-	return -1;
+	TCB_t* tcbAtual = executando;
+	getcontext(&(cbAtual->context));
+	tcbAtual->state = PROCST_APTO;
+	unsigned int novaPrioridade = stopTimer();
+	tcbAtual->prio = novaPrioridade;
+	adicionarTCBNaListaDePrioridades(tcbAtual);
+	executando = retirarThreadDeMaiorPrioridade();
+	executando->state = PROCST_EXEC;
+	setcontext(&(executando->context));
+	return SUCESSO;
 }
 
 int cjoin(int tid) {
 	inicializar();
-	return -1;
+
+	return SUCESSO;
 }
 
 int csem_init(csem_t *sem, int count) {
