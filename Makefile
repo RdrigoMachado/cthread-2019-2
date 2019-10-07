@@ -8,7 +8,7 @@
 #  1. Cuidado com a regra "clean" para não apagar o "support.o"
 #
 # OBSERVAR que as variáveis de ambiente consideram que o Makefile está no diretótio "cthread"
-# 
+#
 
 CC=gcc
 LIB_DIR=./lib
@@ -16,18 +16,12 @@ INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all: regra1 regra2 regran
+all: cthread
+	mkdir -p lib
+	ar crs $(LIB_DIR)/libcthread.a $(BIN_DIR)/lib.o $(BIN_DIR)/support.o
 
-regra1: #dependências para a regra1
-	$(CC) -o $(BIN_DIR)regra1 $(SRC_DIR)regra1.c -Wall
-
-regra2: #dependências para a regra2
-	$(CC) -o $(BIN_DIR)regra2 $(SRC_DIR)regra2.c -Wall
-
-regran: #dependências para a regran
-	$(CC) -o $(BIN_DIR)regran $(SRC_DIR)regran.c -Wall
+cthread:
+	$(CC) -m32 -c $(SRC_DIR)/lib.c -o $(BIN_DIR)/lib.o -Wall
 
 clean:
-	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
-
-
+	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/lib.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
