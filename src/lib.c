@@ -61,9 +61,10 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 	if(aux==0)
 		init();
 
-
-
 	TCB_t* novaThread = malloc(sizeof(TCB_t));
+	if(novaThread==NULL)
+		return ERRO;
+
 	novaThread->prio = 0;
 	novaThread->tid = novoTID();
 	getcontext(&novaThread->context);
@@ -71,18 +72,20 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 	(novaThread->context).uc_stack.ss_sp   = malloc(SIGSTKSZ);
 	(novaThread->context).uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&novaThread->context, (void*)start, 1, arg);
-	inserirTCBNaFila(novaThread);
-	listar();
-	return -1;
-}
-int cyield(void) {
-	listar();
-	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
-	TCB_t* atual = executando;
-	if(proximo == NULL)
-		return -1;
 
+	if(inserirTCBNaFila(novaThread) != SUCESSO)
+		return ERRO;
+	else
+		return tid;
+}
+
+int cyield(void) {
+	TCB_t* atual = executando;
 	inserirTCBNaFila(atual);
+	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
+	if(proximo == NULL)
+		return ERRO;
+
 	executando = proximo;
 	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
