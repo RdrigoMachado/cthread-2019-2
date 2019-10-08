@@ -17,52 +17,53 @@
 int iniciada = FALSE;
 int tid;
 TCB_t* main_tcb;
-PFILA2 listaDePrioridades;
 TCB_t* executando;
-ucontext_t escalonador;
+ucontext_t* termino;
 
 int novoTID(){
 	tid++;
 	return tid;
 }
 
-void* despachante(void* arg){
+void* terminarThreadEChamarProxima(void* arg){
 	JOIN* join = retornaERemoveJoinComTIDEsperado(executando->tid);
 	if(join != NULL){
 		inserirTCBNaFila(join->esperando);
-		printf("TCB de tid %d desbloqueado pelo termino da Thread %d\n", (join->esperando)->tid, join->tidDoTCBSendoEsperado);
 	}
+
+	free(executando);
 	executando = devolverERetirarTCBDeMaiorPrioridadeDaFila();
+	startTimer();
 	setcontext(&executando->context);
 	return NULL;
 }
-int aux = 0;
-ucontext_t* link;
+
 void init(){
-	printf("init\n");
+	if(iniciada == TRUE)
+		return;
+	iniciada = TRUE;
+
+	startTimer();
 	tid=-1;
-	aux++;
 	main_tcb = malloc(sizeof(TCB_t));
 	getcontext(&main_tcb->context);
 	main_tcb->tid =novoTID();
-	main_tcb->prio = 5;
 	(main_tcb->context).uc_link = NULL;
 	(main_tcb->context).uc_stack.ss_sp   = malloc(SIGSTKSZ);
 	(main_tcb->context).uc_stack.ss_size = SIGSTKSZ;
 	executando = main_tcb;
 
-	link = malloc(sizeof(ucontext_t));
+	termino = malloc(sizeof(ucontext_t));
 
-	getcontext(link);
-	link->uc_link = NULL;
-	link->uc_stack.ss_sp   = malloc(SIGSTKSZ);
-	link->uc_stack.ss_size = SIGSTKSZ;
-	makecontext(link, (void*)despachante, 0);
+	getcontext(termino);
+	termino->uc_link = NULL;
+	termino->uc_stack.ss_sp   = malloc(SIGSTKSZ);
+	termino->uc_stack.ss_size = SIGSTKSZ;
+	makecontext(termino, (void*)terminarThreadEChamarProxima, 0);
 }
 
 int ccreate (void* (*start)(void*), void *arg, int prio) {
-	if(aux==0)
-		init();
+	init();
 
 	TCB_t* novaThread = malloc(sizeof(TCB_t));
 	if(novaThread==NULL)
@@ -71,11 +72,10 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 	novaThread->prio = 0;
 	novaThread->tid = novoTID();
 	getcontext(&novaThread->context);
-	(novaThread->context).uc_link = link;
+	(novaThread->context).uc_link = termino;
 	(novaThread->context).uc_stack.ss_sp   = malloc(SIGSTKSZ);
 	(novaThread->context).uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&novaThread->context, (void*)start, 1, arg);
-
 	if(inserirTCBNaFila(novaThread) != SUCESSO)
 		return ERRO;
 	else
@@ -83,29 +83,30 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 }
 
 int cyield(void) {
-	if(aux==0)
-		init();
+	init();
 
 	TCB_t* atual = executando;
+	atual->prio = stopTimer();
 	inserirTCBNaFila(atual);
 	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 	if(proximo == NULL)
 		return ERRO;
 
 	executando = proximo;
+	startTimer();
 	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
 }
 
 int cjoin(int tid) {
-	if(aux==0)
-		init();
+	init();
 
 	if(tidExisteNaListaDeTCBs(tid) == FALSE)
 		return ERRO;
 	if(tidSendoEsperado(tid) == TRUE)
 		return ERRO;
 
+	executando->prio = stopTimer();
 	JOIN* join = malloc(sizeof(JOIN));
 	join->tidDoTCBSendoEsperado = tid;
 	join->esperando = executando;
@@ -114,34 +115,31 @@ int cjoin(int tid) {
 	TCB_t* atual = executando;
 	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 	executando = proximo;
+	startTimer();
 	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
 }
 
 int csem_init(csem_t *sem, int count) {
-	if(aux==0)
-		init();
+	init();
 
 	return -1;
 }
 
 int cwait(csem_t *sem) {
-	if(aux==0)
-		init();
+	init();
 
 	return -1;
 }
 
 int csignal(csem_t *sem) {
-	if(aux==0)
-		init();
+	init();
 
 	return -1;
 }
 
 int cidentify (char *name, int size) {
-	if(aux==0)
-		init();
+	init();
 
 	strncpy (name, "Sergio Cechin - 2019/2 - Teste de compilacao.", size);
 	return 0;

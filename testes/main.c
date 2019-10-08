@@ -4,6 +4,7 @@ int i = 0;
 void* func1(void *arg) {
   i++;
   printf("THREAD%d\n", i);
+  cyield();
   return NULL;
 }
 void* vaiSerEsperada(void *arg) {
