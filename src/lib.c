@@ -27,8 +27,11 @@ int novoTID(){
 }
 
 void* despachante(void* arg){
-	printf("despachante\n" );
-	listar();
+	JOIN* join = retornaERemoveJoinComTIDEsperado(executando->tid);
+	if(join != NULL){
+		inserirTCBNaFila(join->esperando);
+		printf("TCB de tid %d desbloqueado pelo termino da Thread %d\n", (join->esperando)->tid, join->tidDoTCBSendoEsperado);
+	}
 	executando = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 	setcontext(&executando->context);
 	return NULL;
@@ -80,6 +83,9 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 }
 
 int cyield(void) {
+	if(aux==0)
+		init();
+
 	TCB_t* atual = executando;
 	inserirTCBNaFila(atual);
 	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
@@ -92,22 +98,51 @@ int cyield(void) {
 }
 
 int cjoin(int tid) {
+	if(aux==0)
+		init();
+
+	if(tidExisteNaListaDeTCBs(tid) == FALSE)
+		return ERRO;
+	if(tidSendoEsperado(tid) == TRUE)
+		return ERRO;
+
+	JOIN* join = malloc(sizeof(JOIN));
+	join->tidDoTCBSendoEsperado = tid;
+	join->esperando = executando;
+	inserirJoinNaFila(join);
+
+	TCB_t* atual = executando;
+	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
+	executando = proximo;
+	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
 }
 
 int csem_init(csem_t *sem, int count) {
+	if(aux==0)
+		init();
+
 	return -1;
 }
 
 int cwait(csem_t *sem) {
+	if(aux==0)
+		init();
+
 	return -1;
 }
 
 int csignal(csem_t *sem) {
+	if(aux==0)
+		init();
+
 	return -1;
 }
 
 int cidentify (char *name, int size) {
+	if(aux==0)
+		init();
+
 	strncpy (name, "Sergio Cechin - 2019/2 - Teste de compilacao.", size);
 	return 0;
 }

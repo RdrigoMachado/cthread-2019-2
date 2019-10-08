@@ -6,10 +6,19 @@
 #define FALSE 0
 
 PFILA2 listaDePrioridades;
+PFILA2 joins;
 
 int inicializarListaDePrioridades(){
 	listaDePrioridades =  malloc(sizeof(PFILA2));
 	if(CreateFila2(listaDePrioridades) == 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+int inicializarListaDeJoins(){
+	joins =  malloc(sizeof(PFILA2));
+	if(CreateFila2(joins) == 0)
 		return TRUE;
 	else
 		return FALSE;
@@ -49,8 +58,58 @@ int inserirTCBNaFila(TCB_t* tcb){
 
   return AppendFila2(listaDePrioridades, tcb);
 }
+int inserirJoinNaFila(JOIN* join){
+  if(joins == NULL)
+    inicializarListaDeJoins();
+  return AppendFila2(joins, join);
+}
 
-void listar(){
+int tidExisteNaListaDeTCBs(int tid){
+	if(listaDePrioridades == NULL)
+		return FALSE;
+	FirstFila2(listaDePrioridades);
+	if(listaDePrioridades->first == NULL)
+		return FALSE;
+
+	do{
+		TCB_t* tcbAtual = GetAtIteratorFila2(listaDePrioridades);
+		if (tcbAtual->tid == tid)
+			return TRUE;
+	} while(proximoNoLista() == TRUE);
+	return FALSE;
+}
+
+int tidSendoEsperado(int tid){
+	if(joins == NULL)
+		return FALSE;
+	FirstFila2(joins);
+	if(joins->first == NULL)
+		return FALSE;
+
+	do{
+		JOIN* joinAtual = GetAtIteratorFila2(joins);
+		if (joinAtual->tidDoTCBSendoEsperado == tid)
+			return TRUE;
+	} while(proximoNoLista() == TRUE);
+	return FALSE;
+}
+
+JOIN* retornaERemoveJoinComTIDEsperado(int tid){
+	if(joins == NULL)
+		return NULL;
+	FirstFila2(joins);
+	if(joins->first == NULL)
+		return NULL;
+
+	do{
+		JOIN* joinAtual = GetAtIteratorFila2(joins);
+		if (joinAtual->tidDoTCBSendoEsperado == tid)
+			return joinAtual;
+	} while(proximoNoLista() == TRUE);
+	return NULL;
+}
+
+void listarTCBs(){
   if(listaDePrioridades == NULL)
     return;
   FirstFila2(listaDePrioridades);
@@ -60,6 +119,20 @@ void listar(){
   do{
     TCB_t* tcbAtual = GetAtIteratorFila2(listaDePrioridades);
     printf("TID: %d, PRIO: %d\n", tcbAtual->tid, tcbAtual->prio);
+  } while(proximoNoLista() == TRUE);
+  printf("----------------\n" );
+}
+
+void listarJoins(){
+  if(joins == NULL)
+    return;
+  FirstFila2(joins);
+  if(joins->first == NULL)
+    return;
+
+  do{
+    JOIN* joinAtual = GetAtIteratorFila2(joins);
+    printf("TID esperando: %d, TID esperado: %d\n", joinAtual->esperando->tid, joinAtual->tidDoTCBSendoEsperado);
   } while(proximoNoLista() == TRUE);
   printf("----------------\n" );
 }
