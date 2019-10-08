@@ -16,12 +16,14 @@ INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all: cthread
+all: estruturas cthread
 	mkdir -p lib
-	ar crs $(LIB_DIR)/libcthread.a $(BIN_DIR)/lib.o $(BIN_DIR)/support.o
+	ar crs $(LIB_DIR)/libcthread.a $(BIN_DIR)/lib.o $(BIN_DIR)/support.o $(BIN_DIR)/estruturas.o
 
 cthread:
 	$(CC) -m32 -c $(SRC_DIR)/lib.c -o $(BIN_DIR)/lib.o -Wall
+estruturas:
+	$(CC) -m32 -c $(SRC_DIR)/estruturas.c -o $(BIN_DIR)/estruturas.o -Wall
 
 clean:
 	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/lib.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~

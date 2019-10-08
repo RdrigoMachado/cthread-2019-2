@@ -37,6 +37,6 @@ typedef struct s_NoPrioridades{
 typedef struct s_JOIN{
 	int tidDoTCBSendoEsperado;
 	TCB_t* esperando;
-} JOIN
+} JOIN;
 
 #endif
