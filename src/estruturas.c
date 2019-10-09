@@ -105,21 +105,17 @@ int tidSendoEsperado(int tid){
 }
 
 JOIN* retornaERemoveJoinComTIDEsperado(int tid){
-	if(joins == NULL){
-		printf("joins eh nulo\n");
+	if(joins == NULL)
 		return NULL;
-	}
 	FirstFila2(joins);
-	if(joins->first == NULL){
-		printf("joins eh vazio\n");
+	if(joins->first == NULL)
 		return NULL;
-	}
+
 	do{
 		JOIN* joinAtual = GetAtIteratorFila2(joins);
 		if (joinAtual->tidDoTCBSendoEsperado == tid)
 			return joinAtual;
 	} while(proximoNoListaJOIN() == TRUE);
-	printf("nao encontrei o join\n" );
 	return NULL;
 }
 
