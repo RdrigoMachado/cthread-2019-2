@@ -1,63 +1,56 @@
-#include "../include/support.h"
-#include "../include/cthread.h"
-#include <stdio.h>
+/*
+ * test_vetor.c: realiza a criação de 10 threads, cada uma delas escreve uma
+ * sequencia de 20 letras iguais e passa a vez para outra thread. Repete até
+ * preencher um vetor de 250 caracteres.
+ */
 
-csem_t impressora;
-int int_var;
+#include	"../include/support.h"
+#include	"../include/cthread.h"
+#include	<stdio.h>
+#include	<stdlib.h>
 
-void* func0(void *arg) {
-	printf("[tid1]	======== Inicio da func0 ========\n");
-	printf("[tid1]	Executando \n");
-	printf("[tid1]  Liberando recurso do semaforo\n");
-	printf("[tid1]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid1]	Executando \n");
-	printf("[tid1]  Requisitando recurso do semaforo\n");
-	printf("[tid1]  Requisitando recurso do semaforo: %d\n", cwait(&impressora));
-	printf("[tid1]	Executando \n");
-	printf("[tid1]  Chamando cyield()\n");
-	printf("[tid1]  Chamando cyield(). Ret: %d\n", cyield());
-	printf("[tid1]  Executando\n");
-	printf("[tid1]	Chamando csem_init com um csem_t*\n");
-	printf("[tid1]  Chamando csem_init com um csem_t*: %d\n", csem_init(&impressora, 1));
-	printf("[tid1]	Executando \n");
-	printf("[tid1]  Liberando recurso do semaforo\n");
-	printf("[tid1]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid1]	Executando \n");
-	printf("[tid1]	======== Fim da func0 ========\n");
-}
+#define		MAX_SIZE	250
+#define		MAX_THR		10
 
-void* func1(void *arg) {
-	printf("[tid2]	======== Inicio da func1 ========\n");
-	printf("[tid2]  Executando\n");
-	printf("[tid2]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid2]	Executando \n");
-	printf("[tid2]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid2]	Executando \n");
-	printf("[tid2]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid2]	Executando \n");
-	printf("[tid2]  Requisitando recurso do semaforo\n");
-	printf("[tid2]  Requisitando recurso do semaforo: %d\n", cwait(&impressora));
-	printf("[tid2]  Executando\n");
-	printf("[tid2]  Chamando cyield()\n");
-	printf("[tid2]  Chamando cyield(). Ret: %d\n", cyield());
-	printf("[tid2]  Executando\n");
-	printf("[tid2]  Liberando recurso do semaforo %d\n", csignal(&impressora));
-	printf("[tid2]	Executando \n");
-	printf("[tid2]	======== Fim da func1 ========\n");
+int vetor[MAX_SIZE];
+int  inc = 0;
+
+void *func(void *arg){
+
+   while ( inc < MAX_SIZE ) {
+       vetor[inc] = (int)arg;
+       inc++;
+       if ( (inc % 20) == 0 )
+           cyield();
+       else
+           continue;
+   }
+
+   return (NULL);
 }
 
 
 int main(int argc, char *argv[]) {
-	int i = 0;
-	printf("\n[main]	================ Inicio da main ================\n");
-	printf("[main]	Executando \n");
-	printf("[main]  Chamando csem_init com um csem_t*: %d\n", csem_init(&impressora, 1));
+    int i, pid[MAX_THR];
 
-	printf("[main]	Criando thread func0 com prioridade 0. Ret: %d\n", ccreate(func0, (void *)&i, 0));
-	printf("[main]	Criando thread func1 com prioridade 0. Ret: %d\n", ccreate(func1, (void *)&i, 0));
 
-	printf("[main]	Chamando cjoin(tid2)\n");
-	printf("[main]	Chamando cjoin(tid2) Ret: %d\n", cjoin(2));
+    for (i = 0; i < MAX_THR; i++) {
+        pid[i] = ccreate(func, (void *)('A'+i), 0);
+       if ( pid[i] == -1) {
+          printf("ERRO: criação de thread!\n");
+          exit(-1);
+       }
+     }
 
-	printf("[main]	================ Fim da main ================\n");
+    for (i = 0; i < MAX_THR; i++)
+         cjoin(pid[i]);
+
+    for (i = 0; i < MAX_SIZE; i++) {
+        if ( (i % 20) == 0 )
+           printf("\n");
+        printf("%c", (char)vetor[i]);
+    }
+
+    printf("\nConcluido vetor de letras...\n");
+    exit(0);
 }

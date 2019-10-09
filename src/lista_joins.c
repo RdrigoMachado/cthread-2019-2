@@ -43,6 +43,21 @@ JOIN* retornaERemoveJoinComTIDEsperado(int tid){
 	return NULL;
 }
 
+int tidSendoEsperado(int tid){
+	if(joins == NULL)
+		return FALSE;
+
+	FirstFila2(joins);
+	if(joins->first == NULL)
+		return FALSE;
+
+	do{
+			JOIN* atual = GetAtIteratorFila2(joins);
+			if(atual->tidDoTCBSendoEsperado == tid)
+				return TRUE;
+	}while(proximoNoListaJOIN() == TRUE);
+	return FALSE;
+}
 
 void listarJoins(){
   if(joins == NULL)

@@ -20,16 +20,15 @@ TCB_t* main_tcb;
 TCB_t* executando;
 ucontext_t* termino;
 
-
 int novoTID(){
 	tid++;
 	return tid;
 }
 
 void* terminarThreadEChamarProxima(void* arg){
-
 	JOIN* join = retornaERemoveJoinComTIDEsperado(executando->tid);
 	if(join != NULL){
+		join->esperando->state = PROCST_APTO;
 		inserirTCBNaFila(join->esperando);
 	}
 
@@ -87,10 +86,11 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 
 int cyield(void) {
 	init();
-
 	TCB_t* atual = executando;
 	atual->prio = stopTimer();
+	atual->state = PROCST_APTO;
 	inserirTCBNaFila(atual);
+
 	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 	if(proximo == NULL)
 		return ERRO;
@@ -110,8 +110,8 @@ int cjoin(int tid) {
 	if(tidSendoEsperado(tid) == TRUE)
 		return ERRO;
 
-
 	executando->prio = stopTimer();
+	executando->state = PROCST_BLOQ;
 	JOIN* join = malloc(sizeof(JOIN));
 	join->tidDoTCBSendoEsperado = tid;
 	join->esperando = executando;
@@ -137,13 +137,9 @@ int csem_init(csem_t *sem, int count) {
 		return ERRO;
 
 	sem->count = count;
-	TCB_t* teste = malloc(sizeof(TCB_t));
-	teste->prio = 1;
-	teste->tid = 11;
-	if(CreateFila2(sem->fila) == 0){
-		AppendFila2(sem->fila, teste);
+	if(CreateFila2(sem->fila) == SUCESSO)
 		return SUCESSO;
-	}
+
 	return ERRO;
 }
 
@@ -157,7 +153,7 @@ int cwait(csem_t *sem) {
 
 	if(sem->count < 0){
 		TCB_t* atual = executando;
-
+		atual->state = PROCST_BLOQ;
 		if(inserirTCBNaFilaBloqueados(atual) != SUCESSO)
 			return ERRO;
 
@@ -178,11 +174,10 @@ int csignal(csem_t *sem) {
 
 	sem->count = sem->count+1;
 
-	if(sem > 0){
+	if(sem->count < 1){
 		TCB_t* desbloqueada = devolverERetirarTCBDeMaiorPrioridadeDaFilaBloqueados();
 		if(desbloqueada != NULL){
 			inserirTCBNaFila(desbloqueada);
-			listarTCBsBloqueados();
 		}
 	}
 
@@ -191,7 +186,8 @@ int csignal(csem_t *sem) {
 
 int cidentify (char *name, int size) {
 	init();
-
-	strncpy (name, "Sergio Cechin - 2019/2 - Teste de compilacao.", size);
+	if(size < 41)
+		return ERRO;
+	strncpy (name, "Maria 278892\nRenan 260845\nRodrigo 260849", size);
 	return 0;
 }

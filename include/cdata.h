@@ -29,11 +29,6 @@ typedef struct s_TCB {
 
 } TCB_t;
 
-typedef struct s_NoPrioridades{
-	PFILA2 filaFCFS;
-	int prioridade;
-} NoPrioridade;
-
 typedef struct s_JOIN{
 	int tidDoTCBSendoEsperado;
 	TCB_t* esperando;
