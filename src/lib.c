@@ -150,10 +150,17 @@ int csem_init(csem_t *sem, int count) {
 int cwait(csem_t *sem) {
 	init();
 
-	if(sem->count <= 0){
-		sem->count = sem->count-1;
+	if(sem == NULL)
+		return ERRO;
+
+	sem->count = sem->count-1;
+
+	if(sem->count < 0){
 		TCB_t* atual = executando;
-		inserirTCBNaFilaBloqueados(atual);
+
+		if(inserirTCBNaFilaBloqueados(atual) != SUCESSO)
+			return ERRO;
+
 		atual->prio = stopTimer();
 		executando = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 		startTimer();
@@ -166,7 +173,20 @@ int cwait(csem_t *sem) {
 int csignal(csem_t *sem) {
 	init();
 
-	return -1;
+	if(sem == NULL)
+		return ERRO;
+
+	sem->count = sem->count+1;
+
+	if(sem > 0){
+		TCB_t* desbloqueada = devolverERetirarTCBDeMaiorPrioridadeDaFilaBloqueados();
+		if(desbloqueada != NULL){
+			inserirTCBNaFila(desbloqueada);
+			listarTCBsBloqueados();
+		}
+	}
+
+	return SUCESSO;
 }
 
 int cidentify (char *name, int size) {
