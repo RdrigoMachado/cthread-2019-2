@@ -128,7 +128,20 @@ int cjoin(int tid) {
 int csem_init(csem_t *sem, int count) {
 	init();
 
-	return -1;
+	sem = malloc(sizeof(csem_t));
+	if(sem == NULL)
+		return ERRO;
+
+	sem->fila = malloc(sizeof(PFILA2));
+	if(sem->fila == NULL)
+		return ERRO;
+
+	sem->count = count;
+
+	if(CreateFila2(sem->fila) == 0)
+		return SUCESSO;
+
+	return ERRO;
 }
 
 int cwait(csem_t *sem) {

@@ -24,5 +24,12 @@ int main(){
 	printf("main(): cjoin(%d)\n",tids[0]);
 	printf("main(): retorno cjoin(): %d\n",cjoin(tids[0]));
 
+	csem_t* semaforo = NULL;
+	int recursos = 5;
+	if(csem_init(semaforo, recursos) == 0)
+		printf("Sucesso ao criar semaforo\n");
+	else
+		printf("Falha ao criar semaforo\n" );
+
     return 0;
 }
