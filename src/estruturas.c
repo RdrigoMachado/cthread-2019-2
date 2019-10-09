@@ -34,6 +34,13 @@ int proximoNoLista(){
 		return FALSE;
 }
 
+int proximoNoListaJOIN(){
+	if((NextFila2(joins)) == 0)
+		return TRUE;
+	else
+		return FALSE;
+}
+
 TCB_t* devolverERetirarTCBDeMaiorPrioridadeDaFila(){
 	if(listaDePrioridades == NULL)
 		return NULL;
@@ -93,22 +100,26 @@ int tidSendoEsperado(int tid){
 		JOIN* joinAtual = GetAtIteratorFila2(joins);
 		if (joinAtual->tidDoTCBSendoEsperado == tid)
 			return TRUE;
-	} while(proximoNoLista() == TRUE);
+	} while(proximoNoListaJOIN() == TRUE);
 	return FALSE;
 }
 
 JOIN* retornaERemoveJoinComTIDEsperado(int tid){
-	if(joins == NULL)
+	if(joins == NULL){
+		printf("joins eh nulo\n");
 		return NULL;
+	}
 	FirstFila2(joins);
-	if(joins->first == NULL)
+	if(joins->first == NULL){
+		printf("joins eh vazio\n");
 		return NULL;
-
+	}
 	do{
 		JOIN* joinAtual = GetAtIteratorFila2(joins);
 		if (joinAtual->tidDoTCBSendoEsperado == tid)
 			return joinAtual;
-	} while(proximoNoLista() == TRUE);
+	} while(proximoNoListaJOIN() == TRUE);
+	printf("nao encontrei o join\n" );
 	return NULL;
 }
 
@@ -136,6 +147,6 @@ void listarJoins(){
   do{
     JOIN* joinAtual = GetAtIteratorFila2(joins);
     printf("TID esperando: %d, TID esperado: %d\n", joinAtual->esperando->tid, joinAtual->tidDoTCBSendoEsperado);
-  } while(proximoNoLista() == TRUE);
+  } while(proximoNoListaJOIN() == TRUE);
   printf("----------------\n" );
 }

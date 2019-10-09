@@ -26,6 +26,7 @@ int novoTID(){
 }
 
 void* terminarThreadEChamarProxima(void* arg){
+
 	JOIN* join = retornaERemoveJoinComTIDEsperado(executando->tid);
 	if(join != NULL){
 		inserirTCBNaFila(join->esperando);
@@ -76,6 +77,7 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
 	(novaThread->context).uc_stack.ss_sp   = malloc(SIGSTKSZ);
 	(novaThread->context).uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&novaThread->context, (void*)start, 1, arg);
+
 	if(inserirTCBNaFila(novaThread) != SUCESSO)
 		return ERRO;
 	else
@@ -93,6 +95,8 @@ int cyield(void) {
 		return ERRO;
 
 	executando = proximo;
+
+
 	startTimer();
 	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
@@ -100,11 +104,11 @@ int cyield(void) {
 
 int cjoin(int tid) {
 	init();
-
 	if(tidExisteNaListaDeTCBs(tid) == FALSE)
 		return ERRO;
 	if(tidSendoEsperado(tid) == TRUE)
 		return ERRO;
+
 
 	executando->prio = stopTimer();
 	JOIN* join = malloc(sizeof(JOIN));
@@ -115,6 +119,7 @@ int cjoin(int tid) {
 	TCB_t* atual = executando;
 	TCB_t* proximo = devolverERetirarTCBDeMaiorPrioridadeDaFila();
 	executando = proximo;
+
 	startTimer();
 	swapcontext(&atual->context, &proximo->context);
 	return SUCESSO;
