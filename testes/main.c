@@ -33,5 +33,8 @@ int main(){
 		else
 			printf("Sucesso ao criar semaforo\n#recursos: %d\n", semaforo->count);
 
+		cwait(semaforo);
+
+
     return 0;
 }

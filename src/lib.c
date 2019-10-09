@@ -4,8 +4,9 @@
 #include "../include/support.h"
 #include "../include/cthread.h"
 #include "../include/cdata.h"
-#include "../include/estruturas.h"
-#define STACK_SIZE SIGSTKSZ
+#include "../include/lista_tcbs.h"
+#include "../include/lista_joins.h"
+#include "../include/lista_bloqueados.h"
 #include <signal.h>
 
 #define TRUE 1
@@ -13,12 +14,12 @@
 #define SUCESSO 0
 #define ERRO -1
 
-
 int iniciada = FALSE;
 int tid;
 TCB_t* main_tcb;
 TCB_t* executando;
 ucontext_t* termino;
+
 
 int novoTID(){
 	tid++;
@@ -136,17 +137,30 @@ int csem_init(csem_t *sem, int count) {
 		return ERRO;
 
 	sem->count = count;
-	
-	if(CreateFila2(sem->fila) == 0)
+	TCB_t* teste = malloc(sizeof(TCB_t));
+	teste->prio = 1;
+	teste->tid = 11;
+	if(CreateFila2(sem->fila) == 0){
+		AppendFila2(sem->fila, teste);
 		return SUCESSO;
-
+	}
 	return ERRO;
 }
 
 int cwait(csem_t *sem) {
 	init();
 
-	return -1;
+	if(sem->count <= 0){
+		sem->count = sem->count-1;
+		TCB_t* atual = executando;
+		inserirTCBNaFilaBloqueados(atual);
+		atual->prio = stopTimer();
+		executando = devolverERetirarTCBDeMaiorPrioridadeDaFila();
+		startTimer();
+		swapcontext(&atual->context, &executando->context);
+	}
+
+	return SUCESSO;
 }
 
 int csignal(csem_t *sem) {

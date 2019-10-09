@@ -16,14 +16,18 @@ INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all: estruturas cthread
+all: bloqueados tcbs joins cthread
 	mkdir -p lib
-	ar crs $(LIB_DIR)/libcthread.a $(BIN_DIR)/lib.o $(BIN_DIR)/support.o $(BIN_DIR)/estruturas.o
+	ar crs $(LIB_DIR)/libcthread.a $(BIN_DIR)/lib.o $(BIN_DIR)/support.o $(BIN_DIR)/lista_bloqueados.o $(BIN_DIR)/lista_joins.o $(BIN_DIR)/lista_tcbs.o
 
 cthread:
 	$(CC) -m32 -c $(SRC_DIR)/lib.c -o $(BIN_DIR)/lib.o -Wall
-estruturas:
-	$(CC) -m32 -c $(SRC_DIR)/estruturas.c -o $(BIN_DIR)/estruturas.o -Wall
+bloqueados:
+	$(CC) -m32 -c $(SRC_DIR)/lista_bloqueados.c -o $(BIN_DIR)/lista_bloqueados.o -Wall
+joins:
+	$(CC) -m32 -c $(SRC_DIR)/lista_joins.c -o $(BIN_DIR)/lista_joins.o -Wall
+tcbs:
+	$(CC) -m32 -c $(SRC_DIR)/lista_tcbs.c -o $(BIN_DIR)/lista_tcbs.o -Wall
 
 clean:
 	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/lib.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
