@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "../include/cthread.h"
 void func1(int *tids) {
 	printf("Eu sou a thread ID %d fazendo join na thread ID %d\n", tids[0], tids[1]);
@@ -24,12 +25,13 @@ int main(){
 	printf("main(): cjoin(%d)\n",tids[0]);
 	printf("main(): retorno cjoin(): %d\n",cjoin(tids[0]));
 
-	csem_t* semaforo = NULL;
+	csem_t* semaforo = malloc(sizeof(csem_t));
 	int recursos = 5;
-	if(csem_init(semaforo, recursos) == 0)
-		printf("Sucesso ao criar semaforo\n");
-	else
-		printf("Falha ao criar semaforo\n" );
+	csem_init(semaforo, recursos);
+		if(semaforo == NULL)
+			printf("semaforo nulo\n");
+		else
+			printf("Sucesso ao criar semaforo\n#recursos: %d\n", semaforo->count);
 
     return 0;
 }

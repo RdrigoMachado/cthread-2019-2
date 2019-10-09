@@ -128,7 +128,6 @@ int cjoin(int tid) {
 int csem_init(csem_t *sem, int count) {
 	init();
 
-	sem = malloc(sizeof(csem_t));
 	if(sem == NULL)
 		return ERRO;
 
@@ -137,7 +136,7 @@ int csem_init(csem_t *sem, int count) {
 		return ERRO;
 
 	sem->count = count;
-
+	
 	if(CreateFila2(sem->fila) == 0)
 		return SUCESSO;
 
